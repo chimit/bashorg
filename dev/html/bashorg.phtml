@@ -1,0 +1,5 @@
+<ips:template parameters="$title, $quote_id, $quote" />
+<h3 class='ipsType_reset ipsWidget_title'>{$title}</h3>
+<div class='ipsWidget_inner ipsPad_half ipsCursor_pointer' data-controller="plugins.bashorg" data-action="nextQuote" quote-id="{$quote_id}">
+    {$quote|raw}
+</div>
