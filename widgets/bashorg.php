@@ -90,8 +90,8 @@ class _bashorg extends \IPS\Widget
 	 */
 	public function render()
 	{
-		if (!isset(\IPS\Data\Store::i()->bashorg)) {
-			return null;
+		if (empty(\IPS\Data\Store::i()->bashorg)) {
+			return $this->output( 'Цитатка с башорга :)', null, 'Что-то сломалось, но скоро наладится.' );
 		}
 
 		$quotes = \IPS\Data\Store::i()->bashorg;
