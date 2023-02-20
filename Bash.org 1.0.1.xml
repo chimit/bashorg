@@ -1,0 +1,278 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<plugin name="Bash.org" version_long="10001" version_human="1.0.1" author="motomac" website="" update_check=""><hooks><hook type="C" class="\IPS\core\modules\front\system\plugins" filename="nextQuote"><![CDATA[//<?php
+
+class hook2 extends _HOOK_CLASS_
+{
+    public function nextQuote()
+    {
+	try
+	{
+		try
+		{
+		    	try
+		    	{
+			        $quotes = \IPS\Data\Store::i()->bashorg;
+		
+			        if ( !empty($quotes[(\IPS\Request::i()->quote_id + 1)]) ) {
+			            $quote_id = \IPS\Request::i()->quote_id + 1;
+			        } else {
+			            $quote_id = 0;
+			        }
+		
+			        \IPS\Output::i()->json(array("quote_id" => $quote_id, "quote" => $quotes[$quote_id]));
+				}
+				catch ( \RuntimeException $e )
+				{
+					if ( method_exists( get_parent_class(), __FUNCTION__ ) )
+					{
+						return call_user_func_array( 'parent::' . __FUNCTION__, func_get_args() );
+					}
+					else
+					{
+						throw $e;
+					}
+				}
+			}
+			catch ( \RuntimeException $e )
+			{
+				if ( method_exists( get_parent_class(), __FUNCTION__ ) )
+				{
+					return call_user_func_array( 'parent::' . __FUNCTION__, func_get_args() );
+				}
+				else
+				{
+					throw $e;
+				}
+			}
+		}
+		catch ( \Error | \RuntimeException $e )
+		{
+			if( \defined( '\IPS\DEBUG_HOOKS' ) AND \IPS\DEBUG_HOOKS )
+			{
+				\IPS\Log::log( $e, 'hook_exception' );
+			}
+
+			if ( method_exists( get_parent_class(), __FUNCTION__ ) )
+			{
+				return \call_user_func_array( 'parent::' . __FUNCTION__, \func_get_args() );
+			}
+			else
+			{
+				throw $e;
+			}
+		}
+	}
+}
+]]></hook></hooks><tasks><task key="bashorgupdate" frequency="P0Y0M0DT6H0M0S"><![CDATA[<?php
+/**
+ * @brief		bashorgupdate Task
+ * @author		<a href='http://www.invisionpower.com'>Invision Power Services, Inc.</a>
+ * @copyright	(c) 2001 - SVN_YYYY Invision Power Services, Inc.
+ * @license		http://www.invisionpower.com/legal/standards/
+ * @package		IPS Social Suite
+ * @subpackage	bashorg
+ * @since		01 Jan 2016
+ * @version		SVN_VERSION_NUMBER
+ */
+
+namespace IPS\pluginTasks;
+
+/* To prevent PHP errors (extending class does not exist) revealing path */
+if ( !defined( '\IPS\SUITE_UNIQUE_KEY' ) )
+{
+	header( ( isset( $_SERVER['SERVER_PROTOCOL'] ) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0' ) . ' 403 Forbidden' );
+	exit;
+}
+
+/**
+ * bashorgupdate Task
+ */
+class _bashorgupdate extends \IPS\Task
+{
+	/**
+	 * Execute
+	 *
+	 * If ran successfully, should return anything worth logging. Only log something
+	 * worth mentioning (don't log "task ran successfully"). Return NULL (actual NULL, not '' or 0) to not log (which will be most cases).
+	 * If an error occurs which means the task could not finish running, throw an \IPS\Task\Exception - do not log an error as a normal log.
+	 * Tasks should execute within the time of a normal HTTP request.
+	 *
+	 * @return	mixed	Message to log or NULL
+	 * @throws	\IPS\Task\Exception
+	 */
+	public function execute()
+	{
+		$response = \IPS\Http\Url::external( "https://башорг.рф/rss" )->request()->get()->decodeXml();
+
+		// if ( !( $response instanceof \IPS\Xml\Rss ) and !( $response instanceof \IPS\Xml\Atom ) )
+		// {
+		// 	throw new \IPS\Task\Exception( $this, 'Error updating Bash.org' );
+		// }
+
+		if (!$response) {
+			throw new \IPS\Task\Exception( $this, 'Error updating Bash.org' );
+		}
+
+		$i = 1;
+		foreach ($response->articles() as $article) {
+			if ($i > 30) {
+				break;
+			}
+
+			$quotes[] = htmlspecialchars_decode($article['content']);
+			$i++;
+		}
+
+		\IPS\Data\Store::i()->bashorg = $quotes;
+		return NULL;
+	}
+
+	/**
+	 * Cleanup
+	 *
+	 * If your task takes longer than 15 minutes to run, this method
+	 * will be called before execute(). Use it to clean up anything which
+	 * may not have been done
+	 *
+	 * @return	void
+	 */
+	public function cleanup()
+	{
+
+	}
+}
+]]></task></tasks><widgets><widget key="bashorg" class="\IPS\Widget" restrict="sidebar,cms" default_area="" allow_reuse="0" menu_style="menu" embeddable="1"><![CDATA[<?php
+/**
+ * @brief		bashorg Widget
+ * @author		<a href='http://www.invisionpower.com'>Invision Power Services, Inc.</a>
+ * @copyright	(c) 2001 - SVN_YYYY Invision Power Services, Inc.
+ * @license		http://www.invisionpower.com/legal/standards/
+ * @package		IPS Social Suite
+ * @subpackage	bashorg
+ * @since		01 Jan 2016
+ * @version		SVN_VERSION_NUMBER
+ */
+
+namespace IPS\plugins\<{LOCATION}>\widgets;
+
+/* To prevent PHP errors (extending class does not exist) revealing path */
+if ( !defined( '\IPS\SUITE_UNIQUE_KEY' ) )
+{
+	header( ( isset( $_SERVER['SERVER_PROTOCOL'] ) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0' ) . ' 403 Forbidden' );
+	exit;
+}
+
+/**
+ * bashorg Widget
+ */
+class _bashorg extends \IPS\Widget
+{
+	/**
+	 * @brief	Widget Key
+	 */
+	public $key = 'bashorg';
+
+	/**
+	 * @brief	App
+	 */
+	
+
+	/**
+	 * @brief	Plugin
+	 */
+	public $plugin = '<{ID}>';
+
+	/**
+	 * Initialise this widget
+	 *
+	 * @return void
+	 */
+	public function init()
+	{
+		// Use this to perform any set up and to assign a template that is not in the following format:
+		// $this->template( array( \IPS\Theme::i()->getTemplate( 'widgets', $this->app, 'front' ), $this->key ) );
+		// If you are creating a plugin, uncomment this line:
+		$this->template( array( \IPS\Theme::i()->getTemplate( 'plugins', 'core', 'global' ), $this->key ) );
+		// And then create your template at located at plugins/<your plugin>/dev/html/bashorg.phtml
+
+		parent::init();
+	}
+
+	/**
+	 * Specify widget configuration
+	 *
+	 * @param	null|\IPS\Helpers\Form	$form	Form object
+	 * @return	null|\IPS\Helpers\Form
+	 */
+	public function configuration( &$form=null )
+	{
+ 		if ( $form === null )
+		{
+	 		$form = new \IPS\Helpers\Form;
+ 		}
+
+ 		// $$form->add( new \IPS\Helpers\Form\XXXX( .... ) );
+ 		// return $form;
+ 	}
+
+ 	 /**
+ 	 * Ran before saving widget configuration
+ 	 *
+ 	 * @param	array	$values	Values from form
+ 	 * @return	array
+ 	 */
+ 	public function preConfig( $values )
+ 	{
+ 		return $values;
+ 	}
+
+	/**
+	 * Render a widget
+	 *
+	 * @return	string
+	 */
+	public function render()
+	{
+		if (empty(\IPS\Data\Store::i()->bashorg)) {
+			return $this->output( 'Цитатка с башорга :)', null, 'Что-то сломалось, но скоро наладится.' );
+		}
+
+		$quotes = \IPS\Data\Store::i()->bashorg;
+		$quote_id = array_rand($quotes);
+
+		return $this->output( 'Цитатка с башорга :)', $quote_id, $quotes[$quote_id] );
+
+		// Use $this->output( $foo, $bar ); to return a string generated by the template set in init() or manually added via $widget->template( $callback );
+		// Note you MUST route output through $this->output() rather than calling \IPS\Theme::i()->getTemplate() because of the way widgets are cached
+	}
+}
+]]></widget></widgets><htmlFiles><html filename="bashorg.phtml">PGlwczp0ZW1wbGF0ZSBwYXJhbWV0ZXJzPSIkdGl0bGUsICRxdW90ZV9pZCwgJHF1b3RlIiAvPgo8aDMgY2xhc3M9J2lwc1R5cGVfcmVzZXQgaXBzV2lkZ2V0X3RpdGxlJz57JHRpdGxlfTwvaDM+CjxkaXYgY2xhc3M9J2lwc1dpZGdldF9pbm5lciBpcHNQYWRfaGFsZiBpcHNDdXJzb3JfcG9pbnRlcicgZGF0YS1jb250cm9sbGVyPSJwbHVnaW5zLmJhc2hvcmciIGRhdGEtYWN0aW9uPSJuZXh0UXVvdGUiIHF1b3RlLWlkPSJ7JHF1b3RlX2lkfSI+CiAgICB7JHF1b3RlfHJhd30KPC9kaXY+Cg==</html></htmlFiles><cssFiles/><jsFiles><js filename="bashorg.js">OyggZnVuY3Rpb24oJCwgXywgdW5kZWZpbmVkKXsKICAidXNlIHN0cmljdCI7CgogIHZhciB3ZWF0aGVyT2JqZWN0ID0gaXBzLnV0aWxzLmRiLmdldEJ5VHlwZSgnYmFzaG9yZycpOwoKICBpcHMuY29udHJvbGxlci5yZWdpc3RlcigncGx1Z2lucy5iYXNob3JnJywgewoKICAgIGluaXRpYWxpemU6IGZ1bmN0aW9uKCkgewogICAgICB0aGlzLm9uKGRvY3VtZW50LCAnY2xpY2snLCAnW2RhdGEtYWN0aW9uPSJuZXh0UXVvdGUiXScsIHRoaXMubmV4dFF1b3RlKTsKICAgIH0sCgogICAgbmV4dFF1b3RlOiBmdW5jdGlvbigpIHsKICAgICAgICB2YXIgcXVvdGUgPSAkKHRoaXMuc2NvcGUpOwogICAgICAgIHZhciBxdW90ZV9pZCA9ICQoJ1tkYXRhLWFjdGlvbj1uZXh0UXVvdGVdJykuYXR0cigncXVvdGUtaWQnKTsKCiAgICAgICAgaWYgKHF1b3RlX2lkID09ICcnKSB7CiAgICAgICAgICByZXR1cm47CiAgICAgICAgfQoKICAgICAgICBpcHMuZ2V0QWpheCgpKGlwcy5nZXRTZXR0aW5nKCdiYXNlVVJMJykgKyAnaW5kZXgucGhwP2FwcD1jb3JlJm1vZHVsZT1zeXN0ZW0mc2VjdGlvbj1wbHVnaW5zJmRvPW5leHRRdW90ZSZxdW90ZV9pZD0nICsgcXVvdGVfaWQpCiAgICAgICAgICAgLmRvbmUoZnVuY3Rpb24ocmVzcG9uc2UpIHsKICAgICAgICAgICAgICBxdW90ZS5odG1sKHJlc3BvbnNlLnF1b3RlKTsKICAgICAgICAgICAgICBpcHMudXRpbHMuYW5pbS5nbygnZmFkZUluRG93bicsIHF1b3RlKTsKICAgICAgICAgICAgICAkKCdbZGF0YS1hY3Rpb249bmV4dFF1b3RlXScpLmF0dHIoJ3F1b3RlLWlkJywgcmVzcG9uc2UucXVvdGVfaWQpOwogICAgICAgICAgICB9KQogICAgICAgICAgIC5mYWlsKGZ1bmN0aW9uKCkgewoKICAgICAgICB9KTsKICAgICAgfQoKICB9KTsKfShqUXVlcnksIF8pKTsK</js></jsFiles><resourcesFiles/><lang><word key="block_bashorg" js="0">Цитатка с башорга</word><word key="block_bashorg_desc" js="0">Случайная цитатка с башорга</word></lang><versions><version long="10000" human="1.0.0"/><version long="10001" human="1.0.1"><![CDATA[//<?php
+
+
+/* To prevent PHP errors (extending class does not exist) revealing path */
+if ( !\defined( '\IPS\SUITE_UNIQUE_KEY' ) )
+{
+	header( ( isset( $_SERVER['SERVER_PROTOCOL'] ) ? $_SERVER['SERVER_PROTOCOL'] : 'HTTP/1.0' ) . ' 403 Forbidden' );
+	exit;
+}
+
+/**
+ * 1.0.1 Upgrade Code
+ */
+class ips_plugins_setup_upg_10001
+{
+	/**
+	 * ...
+	 *
+	 * @return	array	If returns TRUE, upgrader will proceed to next step. If it returns any other value, it will set this as the value of the 'extra' GET parameter and rerun this step (useful for loops)
+	 */
+	public function step1()
+	{
+		
+
+		return TRUE;
+	}
+	
+	// You can create as many additional methods (step2, step3, etc.) as is necessary.
+	// Each step will be executed in a new HTTP request
+}]]></version></versions></plugin>
