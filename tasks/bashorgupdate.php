@@ -37,7 +37,7 @@ class _bashorgupdate extends \IPS\Task
 	 */
 	public function execute()
 	{
-		$response = \IPS\Http\Url::external( "http://bash.org.ru/rss/" )->request()->get()->decodeXml();
+		$response = \IPS\Http\Url::external( "https://башорг.рф/rss" )->request()->get()->decodeXml();
 
 		// if ( !( $response instanceof \IPS\Xml\Rss ) and !( $response instanceof \IPS\Xml\Atom ) )
 		// {
