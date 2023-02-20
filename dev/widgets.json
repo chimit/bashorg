@@ -6,8 +6,8 @@
             "cms"
         ],
         "default_area": "",
-        "allow_reuse": false,
+        "allow_reuse": 0,
         "menu_style": "menu",
-        "embeddable": true
+        "embeddable": 1
     }
 }

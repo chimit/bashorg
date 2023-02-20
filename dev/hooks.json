@@ -1,0 +1,6 @@
+{
+    "nextQuote": {
+        "type": "C",
+        "class": "\\IPS\\core\\modules\\front\\system\\plugins"
+    }
+}

@@ -54,7 +54,7 @@ class _bashorgupdate extends \IPS\Task
 				break;
 			}
 
-			$quotes[] = $article['content'];
+			$quotes[] = htmlspecialchars_decode($article['content']);
 			$i++;
 		}
 

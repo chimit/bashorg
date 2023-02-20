@@ -37,7 +37,7 @@ class _bashorg extends \IPS\Widget
 	/**
 	 * @brief	Plugin
 	 */
-	public $plugin = '13';
+	public $plugin = '4';
 
 	/**
 	 * Initialise this widget
